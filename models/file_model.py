@@ -1,4 +1,4 @@
-files_collection = db['files']
+files_collection = db['files'] # type: ignore
 
 def save_metadata(username, file_name, file_path, s3_url):
     files_collection.insert_one({
