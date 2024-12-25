@@ -1,17 +1,21 @@
+from flask import current_app
 from pymongo import MongoClient
 from werkzeug.security import generate_password_hash, check_password_hash
 
-client = MongoClient('mongodb://localhost:27017/')
-db = client['file_storage']
+client = MongoClient(current_app.config['MONGO_URI'])
+db = client['secure_file_storage']
 users = db['users']
 
 def register_user(username, password):
-    if users.find_one({'username': username}):
-        return False
-    hashed_password = generate_password_hash(password)
-    users.insert_one({'username': username, 'password': hashed_password})
+    try:
 
-    return True
+        if users.find_one({'username': username}):
+            return {"Success" : False, "Message": "User already exists."}
+        hashed_password = generate_password_hash(password)
+        users.insert_one({'username': username, 'password': hashed_password})
+        return {"Success": True, "Message": "Registration successful."}
+    except Exception as e:
+        return False
 
 def authenticate_user(username, password):
     user = users.find_one({'username' : username})
