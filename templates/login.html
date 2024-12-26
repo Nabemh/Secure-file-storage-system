@@ -6,34 +6,36 @@
   <div class="col-md-4"></div>
   <div class="col-md-4">
     <main class="form-signin w-100 m-auto">
-      <form role="form" method="post" action="">
+      <form role="form" method="post" action="{{ url_for('login') }}">
         {{ form.csrf_token }}
         <h1 class="h3 mb-3 fw-normal text-center">Please sign in</h1>
 
         <div class="form-floating">
-          {{ form.email(placeholder="email", class="form-control mb-2") }}
-          {{ form.email.label }}
-            {% if form.email.errors %}
-              {% for error in form.email.errors %}
+          {{ form.username(placeholder="Enter your username", class="form-control mb-2") }}
+          <label for="username">Username</label>
+          {% if form.username.errors %}
+            {% for error in form.username.errors %}
               <div class="alert alert-danger" role="alert">
                 {{ error }}
               </div>
-              {% endfor %}
-            {% endif %}
+            {% endfor %}
+          {% endif %}
         </div>
+
         <div class="form-floating">
-          {{ form.password(placeholder="password", class="form-control mb-2") }}
-          {{ form.password.label }}
-            {% if form.password.errors %}
-              {% for error in form.password.errors %}
-                <div class="alert alert-danger" role="alert">
-                  {{ error }}
-                </div>
-              {% endfor %}
-            {% endif %}
+          {{ form.password(placeholder="Enter your password", class="form-control mb-2") }}
+          <label for="password">Password</label>
+          {% if form.password.errors %}
+            {% for error in form.password.errors %}
+              <div class="alert alert-danger" role="alert">
+                {{ error }}
+              </div>
+            {% endfor %}
+          {% endif %}
         </div>
+
         <button class="w-100 btn btn-lg btn-primary" type="submit">Sign in</button>
-        <p class="text-center mt-3">New User? <a href="{{ url_for('accounts.register') }}">Register now</a></p>
+        <p class="text-center mt-3">New User? <a href="{{ url_for('register') }}">Register now</a></p>
       </form>
     </main>
   </div>

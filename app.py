@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user
 from config import DevelopmentConfig
+from forms import LoginForm, RegistrationForm
 from models.user_model import register_user, authenticate_user
 from models.file_model import save_metadata, get_metadata
 from utils.auth import User
@@ -31,41 +32,56 @@ def allowed_file(filename):
 
 # Routes
 @app.route('/')
-@login_required
+#@login_required
 def home():
-    return render_template('core/index.html')
+    return render_template('/core/index.html')
 
-@app.route('/login', methods=['POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
-    username = request.form['username']
-    password = request.form['password']
-    from models.user_model import get_db  # Import here to avoid circular dependencies
-    db = get_db(app)
-    if authenticate_user(db, username, password):
-        user = User(username)
-        login_user(user)
-        return redirect(url_for('dashboard'))
-    flash('Invalid credentials')
-    return redirect(url_for('home'))
+    form = LoginForm()
+    if form.validate_on_submit():
+        username = form.username.data
+        password = form.password.data
 
-@app.route('/register', methods=['POST'])
+        from models.user_model import get_db  # Import here to avoid circular dependencies
+        db = get_db(app)
+        if authenticate_user(db, username, password):
+            user = User(username)
+            login_user(user)
+            return redirect(url_for('dashboard'))
+        
+        flash('Invalid credentials')
+        return redirect(url_for('home'))
+
+    return render_template('login.html', form=form)
+
+@app.route('/register', methods=['GET' ,'POST'])
 def register():
-    username = request.form['username']
-    password = request.form['password']
-    from models.user_model import get_db  # Import here to avoid circular dependencies
-    db = get_db(app)
-    result = register_user(db, username, password)
-    flash(result['Message'])
-    return redirect(url_for('login'))
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        username = form.username.data
+        password = form.password.data
+
+        from models.user_model import get_db  # Import here to avoid circular dependencies
+        db = get_db(app)
+        result = register_user(db, username, password)
+        flash(result['Message'], 'success' if result['Success'] else 'danger')
+        
+        if result['Success']:
+            return redirect(url_for('login'))
+
+        return redirect(url_for('register'))
+
+    return render_template('register.html', form=form)
 
 @app.route('/dashboard')
-@login_required
+#@login_required
 def dashboard():
     files = get_metadata(app, current_user.id)  # Fetch files using `file_model`
     return render_template('dashboard.html', files=files)
 
 @app.route('/upload', methods=['POST'])
-@login_required
+#@login_required
 def upload():
     if 'file' not in request.files:
         flash('No file added')
@@ -98,7 +114,7 @@ def upload():
     return redirect(url_for('dashboard'))
 
 @app.route('/logout')
-@login_required
+#@login_required
 def logout():
     logout_user()
     return redirect(url_for('home'))
