@@ -2,8 +2,11 @@ from flask import current_app
 from pymongo import MongoClient
 from werkzeug.security import generate_password_hash, check_password_hash
 
-client = MongoClient(current_app.config['MONGO_URI'])
-db = client['secure_file_storage']
+def get_db():
+    client = MongoClient(current_app.config['MONGO_URI'])
+    return client['secure_file_storage']
+
+db = get_db()
 users = db['users']
 
 def register_user(username, password):
