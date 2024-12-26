@@ -1,39 +1,35 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, send_file
+from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user
-from pymongo import MongoClient
 from config import DevelopmentConfig
 from models.user_model import register_user, authenticate_user
-from models.file_model import save_file_metadata, get_user_files
+from models.file_model import save_metadata, get_metadata
 from utils.auth import User
-from utils.encrypt import encrypt_file, decrypt_file
+from utils.encrypt import encrypt_file
 import os
-from datetime import datetime
 
 app = Flask(__name__)
 app.config.from_object(DevelopmentConfig)
 
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-#Accessing needed configurations
-mongo_uri = app.config['MONGO_URI']
-app.secret_key = os.urandom(24)
-
-#initializing flask login extensions
+# Flask-Login setup
 login_manager = LoginManager()
 login_manager.init_app(app)
 
-#mongodb setup
-client = MongoClient(mongo_uri)
-db = client['secure_file_storage']
-users_collection = db['users']
-files_collection = db['files']
+@login_manager.user_loader
+def load_user(user_id):
+    from models.user_model import get_db  # Import here to avoid circular dependencies
+    db = get_db(app)
+    user_data = db['users'].find_one({'_id': user_id})
+    if user_data:
+        return User(user_data['username'])
+    return None
 
-#creating a helper function to check if file extension is allowed
+# Helper function to check allowed file types
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
-
-#routes
+# Routes
 @app.route('/')
 @login_required
 def home():
@@ -43,7 +39,9 @@ def home():
 def login():
     username = request.form['username']
     password = request.form['password']
-    if authenticate_user(username, password):
+    from models.user_model import get_db  # Import here to avoid circular dependencies
+    db = get_db(app)
+    if authenticate_user(db, username, password):
         user = User(username)
         login_user(user)
         return redirect(url_for('dashboard'))
@@ -54,48 +52,45 @@ def login():
 def register():
     username = request.form['username']
     password = request.form['password']
-    if register_user(username, password):
-        flash('Registration successful! Proceed to login.')
-    else:
-        flash('User already exists. Please login.')
+    from models.user_model import get_db  # Import here to avoid circular dependencies
+    db = get_db(app)
+    result = register_user(db, username, password)
+    flash(result['Message'])
     return redirect(url_for('login'))
 
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    files = get_user_files(current_user.id)
+    files = get_metadata(app, current_user.id)  # Fetch files using `file_model`
     return render_template('dashboard.html', files=files)
-
 
 @app.route('/upload', methods=['POST'])
 @login_required
 def upload():
-    #checking if file is part of request
     if 'file' not in request.files:
         flash('No file added')
         return redirect(url_for('dashboard'))
-    
-    file = request.files['file']
 
-    #checking if user has a file selected
+    file = request.files['file']
     if file.filename == '':
         flash('No file selected')
         return redirect(url_for('dashboard'))
-    
-    # validating file extension
     if not allowed_file(file.filename):
         flash('Invalid file type!')
         return redirect(url_for('dashboard'))
-    
+
+    # Save and encrypt the file locally
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
     file.save(file_path)
-
     encrypt_file(file_path)
 
-    save_file_metadata(
-        user_id=current_user.id,
-        filename=file.filename,
+    # Save file metadata using `file_model`
+    save_metadata(
+        app,
+        username=current_user.id,  # Assuming `current_user.id` is username
+        file_name=file.filename,
         local_path=file_path,
+        file_path=file_path,
         download_url=None
     )
 

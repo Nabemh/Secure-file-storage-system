@@ -8,6 +8,7 @@ class Config:
     MONGO_URI = os.getenv("MONGO_URI")
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'pdf', 'txt'}
+    UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", os.path.join(os.getcwd(), "uploads"))
 
 class DevelopmentConfig(Config):
     DEBUG = True
