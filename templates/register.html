@@ -8,7 +8,7 @@
     <main class="form-signin w-100 m-auto">
       <form role="form" method="post" action="{{ url_for('register') }}">
         {{ form.csrf_token }}
-        <h1 class="h3 mb-3 fw-normal text-center">Please register</h1>
+        <h1 class="h3 mb-3 fw-normal text-center">Register</h1>
 
         <div class="form-floating">
           {{ form.username(placeholder="Enter your username", class="form-control mb-2") }}
