@@ -32,7 +32,7 @@ def allowed_file(filename):
 
 # Routes
 @app.route('/')
-@login_required
+#@login_required
 def home():
     return render_template('/core/index.html')
 
@@ -75,13 +75,13 @@ def register():
     return render_template('register.html', form=form)
 
 @app.route('/dashboard')
-@login_required
+#@login_required
 def dashboard():
     files = get_metadata(app, current_user.id)  # Fetch files using `file_model`
     return render_template('dashboard.html', files=files)
 
 @app.route('/upload', methods=['POST'])
-@login_required
+#@login_required
 def upload():
     if 'file' not in request.files:
         flash('No file added')
@@ -114,7 +114,7 @@ def upload():
     return redirect(url_for('dashboard'))
 
 @app.route('/logout')
-@login_required
+#@login_required
 def logout():
     logout_user()
     return redirect(url_for('home'))
