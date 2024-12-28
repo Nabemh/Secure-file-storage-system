@@ -1,5 +1,5 @@
 from datetime import time
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, jsonify, render_template, request, redirect, url_for, flash
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user
 from config import DevelopmentConfig
 from forms import LoginForm, RegistrationForm
@@ -78,68 +78,71 @@ def register():
 @app.route('/dashboard', methods=['GET', 'POST'])
 @login_required
 def dashboard():
-    # Initialize the message variable to None
     message = None
 
-    # Handle file upload
+    # Handle file upload (for normal form submit)
     if request.method == 'POST' and 'file' in request.files:
         file = request.files['file']
         
         if file and allowed_file(file.filename):
-            # Generate unique file name using time()
+            # Generate a unique file name using time()
             file_name = f"{int(time.time())}_{file.filename}"
             
             # Securely save the file in the 'files' folder
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], file_name))
             
-            # Provide feedback to the user
+            # Provide feedback to the user (for synchronous upload)
             message = f"File uploaded successfully: {file_name}"
         else:
             message = "Invalid file type or no file selected."
     
     # Fetch files metadata (or any other data) for the dashboard
     files = get_metadata(app, current_user.id)
-    
+
     # Render the dashboard template with the files and the message
     return render_template('dashboard.html', files=files, message=message)
 
-@app.route('/upload', methods=['POST'])
-#@login_required
+
+@@app.route('/upload', methods=['POST'])
+@login_required  # You can comment this out if you want non-logged-in users to upload files
 def upload():
     # Initialize message variable
     message = None
 
+    # Check if file is present
     if 'file' not in request.files:
-        message = 'No file added'
-        return redirect(url_for('dashboard', message=message))
+        return jsonify({'status': 'error', 'message': 'No file selected'}), 400
 
     file = request.files['file']
+    
+    # If filename is empty
     if file.filename == '':
-        message = 'No file selected'
-        return redirect(url_for('dashboard', message=message))
+        return jsonify({'status': 'error', 'message': 'No file selected'}), 400
+    
+    # If file type is not allowed
     if not allowed_file(file.filename):
-        message = 'Invalid file type!'
-        return redirect(url_for('dashboard', message=message))
+        return jsonify({'status': 'error', 'message': 'Invalid file type'}), 400
 
-    # Save the file locally
-    file_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+    # Generate a unique file name and save the file
+    file_name = f"{int(time.time())}_{file.filename}"
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_name)
     file.save(file_path)
 
-    # Encrypt the file (assuming encrypt_file is a defined function)
+    # Encrypt the file (assuming encrypt_file is defined elsewhere)
     encrypt_file(file_path)
 
-    # Save file metadata
+    # Save file metadata in database
     save_metadata(
         app,
         username=current_user.id,  # Assuming `current_user.id` is username
-        file_name=file.filename,
+        file_name=file_name,
         local_path=file_path,
         file_path=file_path,
-        download_url=None
+        download_url=None  # You can add a download URL if needed
     )
 
-    message = 'File uploaded successfully!'
-    return redirect(url_for('dashboard', message=message))
+    # Return success response
+    return jsonify({'status': 'success', 'filename': file_name, 'message': 'File uploaded successfully!'}), 200
 
 
 @app.route('/logout')

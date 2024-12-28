@@ -1,12 +1,12 @@
 function uploadFile(file) {
   let xhr = new XMLHttpRequest();
-  xhr.open("POST", "/dashboard", true); // The Flask route for handling the upload
+  xhr.open("POST", "/upload", true);  // Flask upload endpoint
   
-  xhr.upload.addEventListener("progress", ({loaded, total}) => {
+  // Show progress bar while the file is being uploaded
+  xhr.upload.addEventListener("progress", ({ loaded, total }) => {
     let fileLoaded = Math.floor((loaded / total) * 100);
     let fileTotal = Math.floor(total / 1000);
-    let fileSize;
-    fileTotal < 1024 ? fileSize = fileTotal + " KB" : fileSize = (loaded / (1024*1024)).toFixed(2) + " MB";
+    let fileSize = fileTotal < 1024 ? fileTotal + " KB" : (loaded / (1024 * 1024)).toFixed(2) + " MB";
 
     let progressHTML = `<li class="row">
                           <i class="fas fa-file-alt"></i>
@@ -40,30 +40,24 @@ function uploadFile(file) {
     }
   });
 
-  // Prepare FormData object with the file and send it to Flask
-  let formData = new FormData();
-  formData.append("file", file);  // Append the file to FormData
-  
-  // Handling the response from Flask (success or failure)
-  xhr.onload = function() {
+  // Handle the server response after the file upload completes
+  xhr.onload = function () {
     if (xhr.status === 200) {
       let response = JSON.parse(xhr.responseText);
       if (response.status === "success") {
-        alert(`File uploaded successfully: ${response.filename}`);
-        // You can optionally add code to display a success message on the page as well.
-        let successMessage = `<p>File "${response.filename}" uploaded successfully!</p>`;
-        uploadedArea.insertAdjacentHTML('beforeend', successMessage);
+        let successHTML = `<p>File "${response.filename}" uploaded successfully!</p>`;
+        uploadedArea.insertAdjacentHTML("beforeend", successHTML);
       } else {
-        alert(`Error: ${response.message}`);
-        // Optionally, add an error message to the page
-        let errorMessage = `<p>Error: ${response.message}</p>`;
-        uploadedArea.insertAdjacentHTML('beforeend', errorMessage);
+        let errorHTML = `<p>Error: ${response.message}</p>`;
+        uploadedArea.insertAdjacentHTML("beforeend", errorHTML);
       }
     } else {
-      alert('File upload failed. Please try again.');
+      alert("File upload failed. Please try again.");
     }
   };
 
-  // Sending the file data to Flask
+  // Sending the file to the Flask server
+  let formData = new FormData();
+  formData.append("file", file);
   xhr.send(formData);
 }
