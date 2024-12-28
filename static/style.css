@@ -119,72 +119,68 @@ section .details span{
 .uploaded-area i.fa-check{
   font-size: 16px;
 }
-/* Navbar Styles */
+
 .navbar {
-display: flex;
-justify-content: space-between;
-align-items: center;
-background-color: #333;
-padding: 10px 20px;
-position: fixed;
-width: 100%;
-top: 0;
-left: 0;
-z-index: 1000; /* Makes sure the navbar is above other content */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #333;
+  padding: 10px 20px;
+  position: fixed;
+  width: 100%;
+  top: 0;
+  left: 0;
+  z-index: 1000;
 }
 
 .navbar a {
-color: white;
-text-decoration: none;
-padding: 10px;
-font-size: 16px;
+  color: white;
+  text-decoration: none;
+  padding: 10px;
+  font-size: 16px;
 }
 
 .navbar a:hover {
-background-color: #575757;
-border-radius: 5px;
+  background-color: #575757;
+  border-radius: 5px;
 }
 
-/* Logo or Branding in Navbar */
 .navbar .logo {
-font-size: 20px;
-font-weight: bold;
+  font-size: 20px;
+  font-weight: bold;
 }
 
-/* Logout Button - Aligned to the right */
 .navbar .logout {
-margin-left: auto;
-padding: 8px 20px;
-background-color: #f44336;
-border: none;
-color: white;
-font-size: 16px;
-cursor: pointer;
-border-radius: 5px;
+  margin-left: auto;
+  padding: 8px 20px;
+  background-color: #f44336;
+  border: none;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 5px;
 }
 
 .navbar .logout:hover {
-background-color: #d32f2f;
+  background-color: #d32f2f;
 }
 
-/* Adjust content below the fixed navbar */
 .wrapper {
-margin-top: 60px; /* Space for the fixed navbar */
-padding: 20px;
+  margin-top: 60px;
+  padding: 20px;
 }
 
-/* Additional styles for the form and sections */
 #upload-form {
-display: flex;
-justify-content: center;
-align-items: center;
-flex-direction: column;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
 }
 
 .file-input {
-display: none;
+  display: none;
 }
 
 .progress-area, .uploaded-area {
-margin-top: 20px;
+  margin-top: 20px;
 }

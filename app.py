@@ -1,5 +1,5 @@
 from datetime import time
-from flask import Flask, jsonify, render_template, request, redirect, url_for, flash
+from flask import Flask, jsonify, render_template, request, redirect, session, url_for, flash
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user
 from config import DevelopmentConfig
 from forms import LoginForm, RegistrationForm
@@ -14,7 +14,6 @@ app.config.from_object(DevelopmentConfig)
 
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-# Flask-Login setup
 login_manager = LoginManager()
 login_manager.init_app(app)
 
@@ -148,11 +147,11 @@ def upload():
     return jsonify({'status': 'success', 'filename': file_name, 'message': 'File uploaded successfully!'}), 200
 
 
-@app.route('/logout')
+@app.route('/logout', methods=['POST'])
 #@login_required
 def logout():
     logout_user()
-    return redirect(url_for('home'))
+    return redirect(url_for('login'))
 
 if __name__ == '__main__':
     app.run(debug=True)
