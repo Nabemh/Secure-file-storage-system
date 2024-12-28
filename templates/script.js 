@@ -1,0 +1,69 @@
+function uploadFile(file) {
+  let xhr = new XMLHttpRequest();
+  xhr.open("POST", "/dashboard", true); // The Flask route for handling the upload
+  
+  xhr.upload.addEventListener("progress", ({loaded, total}) => {
+    let fileLoaded = Math.floor((loaded / total) * 100);
+    let fileTotal = Math.floor(total / 1000);
+    let fileSize;
+    fileTotal < 1024 ? fileSize = fileTotal + " KB" : fileSize = (loaded / (1024*1024)).toFixed(2) + " MB";
+
+    let progressHTML = `<li class="row">
+                          <i class="fas fa-file-alt"></i>
+                          <div class="content">
+                            <div class="details">
+                              <span class="name">${file.name} • Uploading</span>
+                              <span class="percent">${fileLoaded}%</span>
+                            </div>
+                            <div class="progress-bar">
+                              <div class="progress" style="width: ${fileLoaded}%"></div>
+                            </div>
+                          </div>
+                        </li>`;
+    uploadedArea.classList.add("onprogress");
+    progressArea.innerHTML = progressHTML;
+
+    if (loaded === total) {
+      progressArea.innerHTML = "";
+      let uploadedHTML = `<li class="row">
+                            <div class="content upload">
+                              <i class="fas fa-file-alt"></i>
+                              <div class="details">
+                                <span class="name">${file.name} • Uploaded</span>
+                                <span class="size">${fileSize}</span>
+                              </div>
+                            </div>
+                            <i class="fas fa-check"></i>
+                          </li>`;
+      uploadedArea.classList.remove("onprogress");
+      uploadedArea.insertAdjacentHTML("afterbegin", uploadedHTML);
+    }
+  });
+
+  // Prepare FormData object with the file and send it to Flask
+  let formData = new FormData();
+  formData.append("file", file);  // Append the file to FormData
+  
+  // Handling the response from Flask (success or failure)
+  xhr.onload = function() {
+    if (xhr.status === 200) {
+      let response = JSON.parse(xhr.responseText);
+      if (response.status === "success") {
+        alert(`File uploaded successfully: ${response.filename}`);
+        // You can optionally add code to display a success message on the page as well.
+        let successMessage = `<p>File "${response.filename}" uploaded successfully!</p>`;
+        uploadedArea.insertAdjacentHTML('beforeend', successMessage);
+      } else {
+        alert(`Error: ${response.message}`);
+        // Optionally, add an error message to the page
+        let errorMessage = `<p>Error: ${response.message}</p>`;
+        uploadedArea.insertAdjacentHTML('beforeend', errorMessage);
+      }
+    } else {
+      alert('File upload failed. Please try again.');
+    }
+  };
+
+  // Sending the file data to Flask
+  xhr.send(formData);
+}

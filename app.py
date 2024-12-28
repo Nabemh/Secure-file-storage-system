@@ -1,3 +1,4 @@
+from datetime import time
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user
 from config import DevelopmentConfig
@@ -44,7 +45,7 @@ def login():
         password = form.password.data
 
         from models.user_model import get_db  # Importing here to avoid circular dependencies
-        db = get_db(app)
+        db = get_db(app)  
         if authenticate_user(db, username, password):
             user = User(username)
             login_user(user)
@@ -74,33 +75,60 @@ def register():
 
     return render_template('register.html', form=form)
 
-@app.route('/dashboard')
-#@login_required
+@app.route('/dashboard', methods=['GET', 'POST'])
+@login_required
 def dashboard():
-    files = get_metadata(app, current_user.id)  # Fetch files using `file_model`
-    return render_template('dashboard.html', files=files)
+    # Initialize the message variable to None
+    message = None
+
+    # Handle file upload
+    if request.method == 'POST' and 'file' in request.files:
+        file = request.files['file']
+        
+        if file and allowed_file(file.filename):
+            # Generate unique file name using time()
+            file_name = f"{int(time.time())}_{file.filename}"
+            
+            # Securely save the file in the 'files' folder
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], file_name))
+            
+            # Provide feedback to the user
+            message = f"File uploaded successfully: {file_name}"
+        else:
+            message = "Invalid file type or no file selected."
+    
+    # Fetch files metadata (or any other data) for the dashboard
+    files = get_metadata(app, current_user.id)
+    
+    # Render the dashboard template with the files and the message
+    return render_template('dashboard.html', files=files, message=message)
 
 @app.route('/upload', methods=['POST'])
 #@login_required
 def upload():
+    # Initialize message variable
+    message = None
+
     if 'file' not in request.files:
-        flash('No file added')
-        return redirect(url_for('dashboard'))
+        message = 'No file added'
+        return redirect(url_for('dashboard', message=message))
 
     file = request.files['file']
     if file.filename == '':
-        flash('No file selected')
-        return redirect(url_for('dashboard'))
+        message = 'No file selected'
+        return redirect(url_for('dashboard', message=message))
     if not allowed_file(file.filename):
-        flash('Invalid file type!')
-        return redirect(url_for('dashboard'))
+        message = 'Invalid file type!'
+        return redirect(url_for('dashboard', message=message))
 
-    # Save and encrypt the file locally
+    # Save the file locally
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
     file.save(file_path)
+
+    # Encrypt the file (assuming encrypt_file is a defined function)
     encrypt_file(file_path)
 
-    # Save file metadata using `file_model`
+    # Save file metadata
     save_metadata(
         app,
         username=current_user.id,  # Assuming `current_user.id` is username
@@ -110,8 +138,9 @@ def upload():
         download_url=None
     )
 
-    flash('File uploaded!')
-    return redirect(url_for('dashboard'))
+    message = 'File uploaded successfully!'
+    return redirect(url_for('dashboard', message=message))
+
 
 @app.route('/logout')
 #@login_required
