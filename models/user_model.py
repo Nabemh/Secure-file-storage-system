@@ -1,11 +1,12 @@
 import ssl
 from flask import current_app
 from pymongo import MongoClient
+from pymongo.server_api import ServerApi
 from werkzeug.security import generate_password_hash, check_password_hash
 
 def get_db(app):
   mongo_uri = app.config['MONGO_URI']
-  client = MongoClient(mongo_uri, tls=True, tlsAllowInvalidCertificates=False, ssl_cert_reqs=ssl.CERT_NO)
+  client = MongoClient(mongo_uri, server_api=ServerApi('1'))
   return client['secure_file_storage']
 
 def register_user(db, username, password):
